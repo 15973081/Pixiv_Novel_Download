@@ -1,0 +1,59 @@
+pixiv_novel_download/
+│
+├── backend/                     # 后端 FastAPI 服务（核心）
+│   ├── app/
+│   │   ├── main.py              # FastAPI 启动入口
+│   │   ├── routers/             # 各 API 路由
+│   │   │   ├── auth.py          # 模拟登录、浏览器 Token
+│   │   │   ├── proxy.py         # 代理服务接口
+│   │   │   ├── version.py       # 版本发布/检查接口
+│   │   │   └── config.py        # 项目配置读取接口
+│   │   ├── core/
+│   │   │   ├── config.py        # 配置加载
+│   │   │   ├── security.py      # token/sign 加密等
+│   │   │   └── browser.py       # 浏览器模拟登录、Cookies
+│   │   ├── services/
+│   │   │   ├── login_service.py
+│   │   │   ├── proxy_service.py
+│   │   │   └── version_service.py
+│   │   ├── utils/
+│   │   │   ├── http.py          # requests/代理封装
+│   │   │   └── tools.py
+│   │   └── __init__.py
+│   ├── requirements.txt
+│   └── run.py                   # 后端启动脚本
+│
+├── frontend_qt/                 # 桌面客户端（Qt/PySide6）
+│   ├── main.py                  # Qt 入口
+│   ├── api/                     # Qt 调后端 API
+│   │   ├── client.py            # 通用 API 客户端
+│   │   ├── auth_api.py
+│   │   ├── proxy_api.py
+│   │   └── version_api.py
+│   ├── ui/                      # Qt Designer UI 文件
+│   └── components/              # UI 组件
+│
+├── frontend_web/ (可选)         # Web 前端（Vue/React + Vite）
+│   ├── index.html
+│   ├── src/
+│   │   ├── pages/
+│   │   ├── components/
+│   │   └── api/
+│   └── package.json
+│
+├── scripts/                     # 单独脚本（如模拟浏览器）
+│   ├── get_browser_token.py
+│   ├── simulate_login.py
+│   └── proxy_test.py
+│
+├── configs/
+│   ├── config.yaml              # 全局配置
+│   └── proxy_list.yaml
+│
+├── tests/
+│   ├── test_login.py
+│   ├── test_proxy.py
+│   └── test_version.py
+│
+├── README.md
+└── start.sh / start.bat         # 一键启动脚本（后台 + 前端）
