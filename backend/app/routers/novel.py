@@ -1,5 +1,9 @@
 from fastapi import APIRouter, Query, HTTPException, Response
 from ..services.novel_service import novel_service
+from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
+from urllib.parse import quote
+import io
 
 router = APIRouter()
 
@@ -29,31 +33,29 @@ def get_novel_content(novel_id: str):
 
 @router.get("/{novel_id}/download")
 def download_novel(novel_id: str, format: str = "txt"):
-    try:
-        result = novel_service.download(novel_id, format)
-        if "error" in result:
-            raise HTTPException(status_code=400, detail=result["error"])
-        
-        # Check if content needs encoding handling
-        content = result["content"]
-        if isinstance(content, str):
-            # Encode string content to bytes for safe transmission
-            # UTF-8 with BOM helps Excel/Windows open it correctly
-            content = content.encode("utf-8-sig")
-            
-        # Sanitize filename to prevent header injection
-        filename = result["filename"].replace('"', '').replace('\n', '').replace('\r', '')
-        
-        # Return as file download
-        headers = {
-            "Content-Disposition": f'attachment; filename="{filename}"'
-        }
-        return Response(
-            content=content,
-            media_type=result["type"],
-            headers=headers
+    result = novel_service.download(novel_id, format)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    content = result["content"]
+    if isinstance(content, str):
+        content = content.encode("utf-8-sig")
+
+    filename = result["filename"]
+    ascii_filename = "novel.txt"          # 兜底名（必须 ASCII）
+    quoted_filename = quote(filename)     # UTF-8 URL 编码
+
+    headers = {
+        "Content-Disposition": (
+            f"attachment; "
+            f"filename=\"{ascii_filename}\"; "
+            f"filename*=UTF-8''{quoted_filename}"
         )
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Download failed: {str(e)}")
+    }
+
+    return StreamingResponse(
+        io.BytesIO(content),
+        media_type=result["type"],
+        headers=headers
+    )
+
