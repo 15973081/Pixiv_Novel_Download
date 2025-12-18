@@ -136,11 +136,17 @@
         request("GET", `${API}/novel/${id}/content`);
     }
 
-    async function downloadNovel() {
+    function downloadNovel() {
         const id = document.getElementById("novelId").value;
-        const blob = await request("GET", `${API}/novel/${id}/download`);
-        saveBlob(blob, `${id}.txt`);
+        if (!id) {
+            alert("请输入小说 ID");
+            return;
+        }
+
+        window.location.href =
+            `${API}/novel/${id}/download`;
     }
+
 
     /* ================= 系列 ================= */
     function getSeriesInfo() {
