@@ -1,81 +1,177 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
-    <meta charset="UTF-8" />
-    <title>Pixiv 小说下载器（原型）</title>
+    <meta charset="UTF-8">
+    <title>Pixiv Novel Downloader – Prototype</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            margin: 20px;
+        }
+        h2 {
+            margin-top: 28px;
+        }
+        .block {
+            border: 1px solid #ccc;
+            padding: 12px;
+            margin-bottom: 20px;
+        }
+        input, select, button {
+            padding: 6px;
+            margin: 4px 0;
+        }
+        pre {
+            background: #f6f6f6;
+            padding: 10px;
+            max-height: 300px;
+            overflow: auto;
+        }
+        .status {
+            font-weight: bold;
+        }
+        .ok { color: green; }
+        .err { color: red; }
+    </style>
 </head>
 <body>
 
-<h2>Pixiv 小说下载器（原型）</h2>
+<h1>📖 Pixiv Novel Downloader – 原型前端（可调试）</h1>
 
-<!-- 搜索区 -->
-<input id="keyword" placeholder="输入关键词">
-<button onclick="search()">搜索</button>
+<!-- ================= 请求调试区 ================= -->
+<div class="block">
+    <h2>📡 请求调试</h2>
+    <div>Method: <span id="reqMethod"></span></div>
+    <div>URL: <span id="reqUrl"></span></div>
+    <div>Status: <span id="reqStatus" class="status"></span></div>
+    <pre id="reqResult"></pre>
+</div>
 
-<p id="status"></p>
+<!-- ================= 小说搜索 ================= -->
+<div class="block">
+    <h2>🔍 搜索小说</h2>
+    <input id="searchKeyword" placeholder="关键词">
+    <input id="searchPage" type="number" value="1" min="1">
+    <button onclick="searchNovel()">搜索</button>
+</div>
 
-<!-- 结果区 -->
-<ul id="result"></ul>
+<!-- ================= 单篇小说 ================= -->
+<div class="block">
+    <h2>📘 单篇小说</h2>
+    <input id="novelId" placeholder="Novel ID">
+    <br>
+    <button onclick="getNovelInfo()">信息</button>
+    <button onclick="getNovelContent()">内容</button>
+    <button onclick="downloadNovel()">下载 TXT</button>
+</div>
+
+<!-- ================= 系列 ================= -->
+<div class="block">
+    <h2>📚 小说系列</h2>
+    <input id="seriesId" placeholder="Series ID">
+    <br>
+    <button onclick="getSeriesInfo()">系列信息</button>
+    <button onclick="getSeriesContent()">章节 ID</button>
+    <br><br>
+    <select id="seriesMode">
+        <option value="split">split（zip）</option>
+        <option value="merge">merge（txt）</option>
+    </select>
+    <button onclick="downloadSeries()">下载系列</button>
+</div>
 
 <script>
-    const API_BASE = "http://127.0.0.1:8000";
+    const API = "http://127.0.0.1:8000";
 
-    /**
-     * 搜索小说
-     */
-    async function search() {
-        const keyword = document.getElementById("keyword").value.trim();
-        const status = document.getElementById("status");
-        const result = document.getElementById("result");
-
-        if (!keyword) {
-            alert("请输入关键词");
-            return;
-        }
-
-        status.textContent = "搜索中...";
-        result.innerHTML = "";
+    /* ================= 核心请求执行器 ================= */
+    async function request(method, url, options = {}) {
+        document.getElementById("reqMethod").textContent = method;
+        document.getElementById("reqUrl").textContent = url;
+        document.getElementById("reqStatus").textContent = "pending";
+        document.getElementById("reqStatus").className = "status";
+        document.getElementById("reqResult").textContent = "";
 
         try {
-            const res = await fetch(
-                `${API_BASE}/novel/search?keyword=${encodeURIComponent(keyword)}`
-            );
+            const res = await fetch(url, { method, ...options });
+            const ct = res.headers.get("content-type") || "";
 
-            if (!res.ok) {
-                throw new Error("请求失败");
+            document.getElementById("reqStatus").textContent = res.status;
+            document.getElementById("reqStatus").classList.add(res.ok ? "ok" : "err");
+
+            if (ct.includes("application/json")) {
+                const data = await res.json();
+                document.getElementById("reqResult").textContent =
+                    JSON.stringify(data, null, 2);
+                return data;
+            } else {
+                const blob = await res.blob();
+                document.getElementById("reqResult").textContent =
+                    `[binary response] ${blob.size} bytes`;
+                return blob;
             }
-
-            const data = await res.json();
-
-            if (!data.items || data.items.length === 0) {
-                status.textContent = "没有结果";
-                return;
-            }
-
-            data.items.forEach(novel => {
-                const li = document.createElement("li");
-                li.innerHTML = `
-        <strong>${novel.title}</strong><br/>
-        作者：${novel.author}<br/>
-        <button onclick="download('${novel.id}')">下载</button>
-        <hr/>
-      `;
-                result.appendChild(li);
-            });
-
-            status.textContent = "";
-        } catch (err) {
-            console.error(err);
-            status.textContent = "无法连接后端";
+        } catch (e) {
+            document.getElementById("reqStatus").textContent = "ERROR";
+            document.getElementById("reqStatus").classList.add("err");
+            document.getElementById("reqResult").textContent = e.toString();
+            throw e;
         }
     }
 
-    /**
-     * 下载小说
-     */
-    function download(novelId) {
-        const url = `${API_BASE}/novel/${novelId}/download?format=txt`;
-        window.open(url, "_blank");
+    /* ================= 小说 ================= */
+    function searchNovel() {
+        const kw = document.getElementById("searchKeyword").value;
+        const page = document.getElementById("searchPage").value;
+        request(
+            "GET",
+            `${API}/novel/search?keyword=${encodeURIComponent(kw)}&page=${page}`
+        );
+    }
+
+    function getNovelInfo() {
+        const id = document.getElementById("novelId").value;
+        request("GET", `${API}/novel/${id}`);
+    }
+
+    function getNovelContent() {
+        const id = document.getElementById("novelId").value;
+        request("GET", `${API}/novel/${id}/content`);
+    }
+
+    async function downloadNovel() {
+        const id = document.getElementById("novelId").value;
+        const blob = await request("GET", `${API}/novel/${id}/download`);
+        saveBlob(blob, `${id}.txt`);
+    }
+
+    /* ================= 系列 ================= */
+    function getSeriesInfo() {
+        const id = document.getElementById("seriesId").value;
+        request("GET", `${API}/series/${id}`);
+    }
+
+    function getSeriesContent() {
+        const id = document.getElementById("seriesId").value;
+        request("GET", `${API}/series/${id}/content`);
+    }
+
+    async function downloadSeries() {
+        const id = document.getElementById("seriesId").value;
+        const mode = document.getElementById("seriesMode").value;
+        const blob = await request(
+            "GET",
+            `${API}/series/${id}/download?mode=${mode}`
+        );
+        const ext = mode === "merge" ? "txt" : "zip";
+        saveBlob(blob, `${id}.${ext}`);
+    }
+
+    /* ================= 下载工具 ================= */
+    function saveBlob(blob, filename) {
+        const a = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
     }
 </script>
 
