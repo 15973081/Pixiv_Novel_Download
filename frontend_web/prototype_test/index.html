@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <title>Pixiv 小说下载器（原型）</title>
+</head>
+<body>
+
+<h2>Pixiv 小说下载器（原型）</h2>
+
+<!-- 搜索区 -->
+<input id="keyword" placeholder="输入关键词">
+<button onclick="search()">搜索</button>
+
+<p id="status"></p>
+
+<!-- 结果区 -->
+<ul id="result"></ul>
+
+<script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    /**
+     * 搜索小说
+     */
+    async function search() {
+        const keyword = document.getElementById("keyword").value.trim();
+        const status = document.getElementById("status");
+        const result = document.getElementById("result");
+
+        if (!keyword) {
+            alert("请输入关键词");
+            return;
+        }
+
+        status.textContent = "搜索中...";
+        result.innerHTML = "";
+
+        try {
+            const res = await fetch(
+                `${API_BASE}/novel/search?keyword=${encodeURIComponent(keyword)}`
+            );
+
+            if (!res.ok) {
+                throw new Error("请求失败");
+            }
+
+            const data = await res.json();
+
+            if (!data.items || data.items.length === 0) {
+                status.textContent = "没有结果";
+                return;
+            }
+
+            data.items.forEach(novel => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+        <strong>${novel.title}</strong><br/>
+        作者：${novel.author}<br/>
+        <button onclick="download('${novel.id}')">下载</button>
+        <hr/>
+      `;
+                result.appendChild(li);
+            });
+
+            status.textContent = "";
+        } catch (err) {
+            console.error(err);
+            status.textContent = "无法连接后端";
+        }
+    }
+
+    /**
+     * 下载小说
+     */
+    function download(novelId) {
+        const url = `${API_BASE}/novel/${novelId}/download?format=txt`;
+        window.open(url, "_blank");
+    }
+</script>
+
+</body>
+</html>
