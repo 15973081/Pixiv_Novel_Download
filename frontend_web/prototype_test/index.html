@@ -82,32 +82,31 @@
 <script>
     const API = "http://127.0.0.1:8000";
 
-    /* ================= 核心请求执行器 ================= */
-    async function request(method, url, options = {}) {
+    /* ================= 核心请求执行器（JSON ONLY） ================= */
+    async function request(method, url) {
         document.getElementById("reqMethod").textContent = method;
         document.getElementById("reqUrl").textContent = url;
-        document.getElementById("reqStatus").textContent = "pending";
+        document.getElementById("reqStatus").textContent = "LOADING";
         document.getElementById("reqStatus").className = "status";
         document.getElementById("reqResult").textContent = "";
 
         try {
-            const res = await fetch(url, { method, ...options });
-            const ct = res.headers.get("content-type") || "";
+            const res = await fetch(url);
+            const data = await res.json();
 
-            document.getElementById("reqStatus").textContent = res.status;
-            document.getElementById("reqStatus").classList.add(res.ok ? "ok" : "err");
-
-            if (ct.includes("application/json")) {
-                const data = await res.json();
+            if (data.status === "ok") {
+                document.getElementById("reqStatus").textContent = "OK";
+                document.getElementById("reqStatus").classList.add("ok");
                 document.getElementById("reqResult").textContent =
                     JSON.stringify(data, null, 2);
-                return data;
             } else {
-                const blob = await res.blob();
+                document.getElementById("reqStatus").textContent = "ERROR";
+                document.getElementById("reqStatus").classList.add("err");
                 document.getElementById("reqResult").textContent =
-                    `[binary response] ${blob.size} bytes`;
-                return blob;
+                    data.msg || JSON.stringify(data, null, 2);
             }
+
+            return data;
         } catch (e) {
             document.getElementById("reqStatus").textContent = "ERROR";
             document.getElementById("reqStatus").classList.add("err");
@@ -142,11 +141,9 @@
             alert("请输入小说 ID");
             return;
         }
-
-        window.location.href =
-            `${API}/novel/${id}/download`;
+        // ⚠️ 下载必须走浏览器导航
+        window.location.href = `${API}/novel/${id}/download`;
     }
-
 
     /* ================= 系列 ================= */
     function getSeriesInfo() {
@@ -159,25 +156,16 @@
         request("GET", `${API}/series/${id}/content`);
     }
 
-    async function downloadSeries() {
+    function downloadSeries() {
         const id = document.getElementById("seriesId").value;
         const mode = document.getElementById("seriesMode").value;
-        const blob = await request(
-            "GET",
-            `${API}/series/${id}/download?mode=${mode}`
-        );
-        const ext = mode === "merge" ? "txt" : "zip";
-        saveBlob(blob, `${id}.${ext}`);
-    }
-
-    /* ================= 下载工具 ================= */
-    function saveBlob(blob, filename) {
-        const a = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
+        if (!id) {
+            alert("请输入系列 ID");
+            return;
+        }
+        // ⚠️ 下载同样不能 fetch
+        window.location.href =
+            `${API}/series/${id}/download?mode=${mode}`;
     }
 </script>
 
