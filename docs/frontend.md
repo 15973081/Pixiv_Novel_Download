@@ -31,3 +31,8 @@ api/ 目录是未来 Qt API client 的“蓝本”
 原型前端遇到问题，后端接口返回正确函数，前端出现错误
 frontend_web/prototype_test
 todo:解决bug
+
+
+12.23
+
+原型前端问题解决，后端接口返回为正常的状态码，前端状态码进行判断

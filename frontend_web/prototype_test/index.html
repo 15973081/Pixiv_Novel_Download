@@ -94,7 +94,7 @@
             const res = await fetch(url);
             const data = await res.json();
 
-            if (data.status === "ok") {
+            if (res.ok) {
                 document.getElementById("reqStatus").textContent = "OK";
                 document.getElementById("reqStatus").classList.add("ok");
                 document.getElementById("reqResult").textContent =
@@ -103,7 +103,7 @@
                 document.getElementById("reqStatus").textContent = "ERROR";
                 document.getElementById("reqStatus").classList.add("err");
                 document.getElementById("reqResult").textContent =
-                    data.msg || JSON.stringify(data, null, 2);
+                    data.detail || JSON.stringify(data, null, 2);
             }
 
             return data;
