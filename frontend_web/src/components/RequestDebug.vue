@@ -1,135 +1,50 @@
 <script setup lang="ts">
-import { ref, provide } from 'vue'
+import { ref } from 'vue';
 
-// 定义请求调试数据的类型
-interface RequestDebugData {
-  method: string
-  url: string
-  status: string
-  result: string
+const method = ref('');
+const url = ref('');
+const status = ref('');
+const result = ref('');
+
+function updateRequest(info: { method: string; url: string }) {
+  method.value = info.method;
+  url.value = info.url;
+  status.value = 'LOADING';
+  result.value = '';
 }
 
-// 初始化请求调试数据
-const debugData = ref<RequestDebugData>({
-  method: '',
-  url: '',
-  status: '',
-  result: ''
-})
-
-// 提供请求调试函数给其他组件使用
-const updateDebug = (data: Partial<RequestDebugData>) => {
-  debugData.value = { ...debugData.value, ...data }
+function updateSuccess(data: any) {
+  status.value = 'OK';
+  result.value = JSON.stringify(data, null, 2);
 }
 
-provide('updateDebug', updateDebug)
+function updateError(error: any) {
+  status.value = 'ERROR';
+  result.value = typeof error === 'string' ? error : error.detail || JSON.stringify(error, null, 2);
+}
+
+defineExpose({ updateRequest, updateSuccess, updateError });
 </script>
 
 <template>
-  <div class="debug-container">
-    <h2 class="debug-title">📡 请求调试</h2>
-    <div class="debug-info">
-      <div class="debug-row">
-        <span class="debug-label">Method:</span>
-        <span class="debug-value">{{ debugData.method }}</span>
-      </div>
-      <div class="debug-row">
-        <span class="debug-label">URL:</span>
-        <span class="debug-value url">{{ debugData.url }}</span>
-      </div>
-      <div class="debug-row">
-        <span class="debug-label">Status:</span>
-        <span 
-          class="debug-value status" 
-          :class="{
-            'status-loading': debugData.status === 'LOADING',
-            'status-ok': debugData.status === 'OK',
-            'status-error': debugData.status === 'ERROR'
-          }"
-        >
-          {{ debugData.status }}
-        </span>
-      </div>
-    </div>
-    <div class="debug-result">
-      <pre>{{ debugData.result }}</pre>
-    </div>
+  <div class="block">
+    <h2>📡 请求调试</h2>
+    <div>Method: <span>{{ method }}</span></div>
+    <div>URL: <span>{{ url }}</span></div>
+    <div>Status: <span :class="['status', { ok: status === 'OK', err: status === 'ERROR' }]">{{ status }}</span></div>
+    <pre>{{ result }}</pre>
   </div>
 </template>
 
 <style scoped>
-.debug-container {
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.debug-title {
-  margin: 0 0 1rem 0;
-  font-size: 1.3rem;
-  color: #343a40;
-}
-
-.debug-info {
-  margin-bottom: 1rem;
-}
-
-.debug-row {
-  display: flex;
-  margin-bottom: 0.5rem;
-  align-items: center;
-}
-
-.debug-label {
-  font-weight: 600;
-  width: 80px;
-  color: #495057;
-}
-
-.debug-value {
-  flex: 1;
-  color: #212529;
-  word-break: break-all;
-}
-
-.debug-value.url {
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 0.9rem;
-  color: #007bff;
-}
-
-.debug-value.status {
-  font-weight: 700;
-}
-
-.status-loading {
-  color: #ffc107;
-}
-
-.status-ok {
-  color: #28a745;
-}
-
-.status-error {
-  color: #dc3545;
-}
-
-.debug-result {
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 4px;
-  padding: 1rem;
+pre {
+  background: #f6f6f6;
+  padding: 10px;
   max-height: 300px;
-  overflow-y: auto;
-}
-
-.debug-result pre {
-  margin: 0;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 0.9rem;
-  color: #495057;
+  overflow: auto;
   white-space: pre-wrap;
-  word-break: break-all;
 }
+.status { font-weight: bold; }
+.ok { color: green; }
+.err { color: red; }
 </style>
