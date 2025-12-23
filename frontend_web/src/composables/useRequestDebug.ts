@@ -1,41 +1,66 @@
 // src/composables/useRequestDebug.ts
 import { inject } from 'vue';
-import {API_BASE} from "../utils/api";
+import { API_BASE } from '../utils/api';
+
+type DebugExpose = {
+    updateRequest: (raw: string) => void;
+    updateSuccess: (raw: string) => void;
+    updateError: (raw: string) => void;
+};
 
 export function useRequestDebug() {
-    // 从App.vue中获取提供的RequestDebug组件实例
-    const requestDebug = inject<{ value: any }>('requestDebug');
-    const debug = requestDebug?.value;
+    // ⚠️ inject 到的是 Ref，而不是直接的实例
+    const requestDebugRef = inject<{ value: DebugExpose | null }>(
+        'requestDebug',
+        { value: null }
+    );
+
+    function getDebug() {
+        return requestDebugRef?.value ?? null;
+    }
 
     async function request(method: string, fullUrl: string) {
-        const url = fullUrl.startsWith('http') ? fullUrl : `${API_BASE}${fullUrl}`;
-        
-        // 确保debug存在再调用方法
-        if (debug) {
-            debug.updateRequest({ method, url });
+        const url = fullUrl.startsWith('http')
+            ? fullUrl
+            : `${API_BASE}${fullUrl}`;
 
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
+        // 请求开始（统一 string）
+        getDebug()?.updateRequest(
+            JSON.stringify({ method, url }, null, 2)
+        );
 
-                if (res.ok) {
-                    debug.updateSuccess(data);
-                } else {
-                    debug.updateError(data);
-                }
-                return data;
-            } catch (e: any) {
-                debug.updateError(e.toString());
-                throw e;
+        try {
+            const res = await fetch(url);
+            const contentType = res.headers.get('content-type') || '';
+
+            let raw: string;
+
+            if (contentType.includes('application/json')) {
+                raw = JSON.stringify(await res.json(), null, 2);
+            } else {
+                raw = JSON.stringify(
+                    { message: '非 JSON 响应（可能是下载或流）' },
+                    null,
+                    2
+                );
             }
-        } else {
-            // 如果debug不存在，仍然执行请求但不更新调试信息
-            try {
-                const res = await fetch(url);
-                return res.json();
-            } catch (e) {
-                throw e;
+
+            if (res.ok) {
+                getDebug()?.updateSuccess(raw);
+            } else {
+                getDebug()?.updateError(raw);
             }
+
+            return raw;
+
+        } catch (e: any) {
+            const err = JSON.stringify(
+                { error: e?.toString?.() ?? '未知错误' },
+                null,
+                2
+            );
+            getDebug()?.updateError(err);
+            throw e;
         }
     }
 

@@ -4,6 +4,7 @@ import RequestDebug from '@/components/RequestDebug.vue';
 import NovelSearch from '@/components/NovelSearch.vue';
 import NovelDetail from '@/components/NovelDetail.vue';
 import NovelSeries from '@/components/NovelSeries.vue';
+import ResultDisplay from '@/components/ResultDisplay.vue';
 
 // 创建RequestDebug组件的引用
 const requestDebug = ref();
@@ -36,6 +37,10 @@ provide('requestDebug', requestDebug);
 
       <section class="block">
         <NovelSeries />
+      </section>
+      <!-- 结果展示区 -->
+      <section class="block">
+        <ResultDisplay />
       </section>
     </main>
 

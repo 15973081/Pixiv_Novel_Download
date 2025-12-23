@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { API_BASE } from '@/utils/api';
-import { useRequestDebug } from '@/composables/useRequestDebug';
+import {useRequestDebug} from "@/composables/useRequestDebug";
 
 const keyword = ref('');
 const page = ref(1);
