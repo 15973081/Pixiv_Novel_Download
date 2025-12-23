@@ -1,8 +1,15 @@
 <script setup lang="ts">
+import { ref, provide } from 'vue';
 import RequestDebug from '@/components/RequestDebug.vue';
 import NovelSearch from '@/components/NovelSearch.vue';
 import NovelDetail from '@/components/NovelDetail.vue';
 import NovelSeries from '@/components/NovelSeries.vue';
+
+// 创建RequestDebug组件的引用
+const requestDebug = ref();
+
+// 提供RequestDebug组件实例给子组件
+provide('requestDebug', requestDebug);
 </script>
 
 <template>
