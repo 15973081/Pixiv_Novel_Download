@@ -2,6 +2,7 @@ import io
 import zipfile
 from typing import List
 
+from ..utils.http import http_client
 from .novel_service import novel_service
 
 
@@ -14,6 +15,7 @@ class SeriesService:
     """
 
     PAGE_SIZE = 30
+    BASE_URL = "https://www.pixiv.net/ajax"
 
     # =====================
     # Series Info
@@ -22,8 +24,65 @@ class SeriesService:
         """
         获取系列元信息
         """
+        url = f"{self.BASE_URL}/novel/series/{series_id}"
         try:
-            return novel_service.get_series_info(series_id)
+            resp = http_client.get(url)
+            resp.raise_for_status()
+            data = resp.json()
+
+            if data.get("error"):
+                return {"error": data.get("message")}
+
+            body = data["body"]
+
+            return {
+                "id": body["id"],
+                "title": body["title"],
+                "userId": body["userId"],
+                "userName": body["userName"],
+                "caption": body.get("caption", ""),
+                "tags": body.get("tags", []),
+                "isConcluded": body.get("isConcluded"),
+                "displaySeriesContentCount": body.get("displaySeriesContentCount", 0),
+                "cover": body.get("cover", {}).get("urls", {}).get("original"),
+                "createDate": body.get("createDate"),
+                "updateDate": body.get("updateDate"),
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    # =====================
+    # Series Content (分页)
+    # =====================
+    def get_series_content(
+            self,
+            series_id: str,
+            offset: int = 0,
+            limit: int = 30
+    ) -> dict:
+        """
+        返回单页 series 内容（不做循环）
+        """
+        url = (
+            f"{self.BASE_URL}/novel/series_content/"
+            f"{series_id}"
+            f"?limit={limit}&last_order={offset}&order_by=asc"
+        )
+
+        try:
+            resp = http_client.get(url)
+            resp.raise_for_status()
+            data = resp.json()
+
+            if data.get("error"):
+                return {"error": data.get("message")}
+
+            page = data["body"]["page"]
+
+            return {
+                "seriesContents": page.get("seriesContents", []),
+                "isLastPage": page.get("isLastPage", False),
+            }
         except Exception as e:
             return {"error": str(e)}
 
@@ -46,7 +105,7 @@ class SeriesService:
         offset = 0
 
         while len(ids) < total:
-            page = novel_service.get_series_content(
+            page = self.get_series_content(
                 series_id=series_id,
                 offset=offset,
                 limit=self.PAGE_SIZE

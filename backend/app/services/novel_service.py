@@ -1,6 +1,4 @@
 from ..utils.http import http_client
-import json
-import re
 
 class NovelService:
     BASE_URL = "https://www.pixiv.net/ajax"
@@ -25,9 +23,6 @@ class NovelService:
                 return {"error": data["message"]}
             return data["body"]
         except Exception as e:
-            import traceback
-            print(f"Error in search: {e}")
-            traceback.print_exc()
             return {"error": str(e)}
 
     def get_info(self, novel_id: str):
@@ -93,68 +88,5 @@ class NovelService:
             }
         
         return {"error": "Unsupported format"}
-
-    def get_series_info(self, series_id: str) -> dict:
-        url = f"{self.BASE_URL}/novel/series/{series_id}"
-        try:
-            resp = http_client.get(url)
-            resp.raise_for_status()
-            data = resp.json()
-
-            if data.get("error"):
-                return {"error": data.get("message")}
-
-            body = data["body"]
-
-            return {
-                "id": body["id"],
-                "title": body["title"],
-                "userId": body["userId"],
-                "userName": body["userName"],
-                "caption": body.get("caption", ""),
-                "tags": body.get("tags", []),
-                "isConcluded": body.get("isConcluded"),
-                "displaySeriesContentCount": body.get("displaySeriesContentCount", 0),
-                "cover": body.get("cover", {}).get("urls", {}).get("original"),
-                "createDate": body.get("createDate"),
-                "updateDate": body.get("updateDate"),
-            }
-        except Exception as e:
-            return {"error": str(e)}
-
-    # =====================
-    # Series Content (分页)
-    # =====================
-    def get_series_content(
-            self,
-            series_id: str,
-            offset: int = 0,
-            limit: int = 30
-    ) -> dict:
-        """
-        返回单页 series 内容（不做循环）
-        """
-        url = (
-            f"{self.BASE_URL}/novel/series_content/"
-            f"{series_id}"
-            f"?limit={limit}&last_order={offset}&order_by=asc"
-        )
-
-        try:
-            resp = http_client.get(url)
-            resp.raise_for_status()
-            data = resp.json()
-
-            if data.get("error"):
-                return {"error": data.get("message")}
-
-            page = data["body"]["page"]
-
-            return {
-                "seriesContents": page.get("seriesContents", []),
-                "isLastPage": page.get("isLastPage", False),
-            }
-        except Exception as e:
-            return {"error": str(e)}
 
 novel_service = NovelService()
