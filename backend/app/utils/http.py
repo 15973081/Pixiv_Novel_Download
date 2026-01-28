@@ -47,7 +47,3 @@ class HttpClient:
 
 # Singleton instance
 http_client = HttpClient()
-
-def http_get(url, headers=None):
-    """Legacy wrapper for compatibility"""
-    return http_client.get(url, headers=headers).text
