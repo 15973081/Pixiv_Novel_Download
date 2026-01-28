@@ -6,4 +6,4 @@ router = APIRouter()
 @router.post("/login")
 def login(username: str, password: str):
     result = simulate_login(username, password)
-    return {"status": "ok", "data": result}
+    return result
