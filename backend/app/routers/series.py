@@ -4,7 +4,7 @@ from urllib.parse import quote
 
 from ..services.series_service import series_service
 
-router = APIRouter(prefix="/series", tags=["Series"])
+router = APIRouter(tags=["Series"])
 
 
 @router.get("/{series_id}")
