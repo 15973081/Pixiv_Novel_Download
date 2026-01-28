@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 app = FastAPI(
     title="Pixiv Novel Downloader API",
     description="Pixiv 小说下载 API",
-    version="1.0.0"
+    version="1.1.0"
 )
 
 @app.get("/")
@@ -19,7 +19,7 @@ def root():
     return {
         "message": "Welcome to Pixiv Novel Downloader API",
         "docs_url": "/docs",
-        "version": "1.0.0"
+        "version": "1.1.0"
     }
 
 # 注册异常处理器
