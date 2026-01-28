@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Query, HTTPException, Response
+from fastapi import APIRouter, Query, HTTPException
 from ..services.novel_service import novel_service
-from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from urllib.parse import quote
 import io
