@@ -1,5 +1,8 @@
-fastapi
-uvicorn
-requests
-playwright
-PyYAML
+fastapi>=0.100.0
+uvicorn[standard]>=0.20.0
+requests>=2.28.0
+playwright>=1.40.0
+PyYAML>=6.0
+anyio>=3.0.0
+pydantic>=2.7.0
+starlette>=0.40.0
