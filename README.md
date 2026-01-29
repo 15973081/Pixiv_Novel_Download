@@ -272,7 +272,7 @@ pytest tests/ --cov=backend --cov-report=html
 ## 部署指南
 
 ### Docker 部署
-
+![img.png](image/docker.png)
 #### 前置要求
 
 - Docker Desktop 已安装并运行
