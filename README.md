@@ -250,17 +250,17 @@ ruff check backend --fix
 ### 测试执行
 
 ```bash
-#安装测试
+# 安装测试
 pip install pytest pytest-cov
 
 # 运行所有测试
-pytest tests/
+pytest tests/ -v
 
 # 运行特定测试
-pytest tests/test_login.py
+pytest tests/test_login.py -v
 
 # 生成覆盖率报告
-pytest tests/ --cov=app --cov-report=html
+pytest tests/ --cov=backend --cov-report=html
 ```
 
 ### 质量标准
@@ -273,12 +273,56 @@ pytest tests/ --cov=app --cov-report=html
 
 ### Docker 部署
 
+#### 前置要求
+
+- Docker Desktop 已安装并运行
+- 端口 8000 未被占用
+
+#### 构建镜像
+
 ```bash
 # 构建镜像
 docker build -t pixiv-novel-downloader .
 
-# 运行容器
-docker run -d -p 8000:8000 pixiv-novel-downloader
+# 查看构建结果
+docker images | grep pixiv-novel-downloader
+```
+
+#### 运行容器
+
+```bash
+# 运行容器（后台模式）
+docker run -d -p 8000:8000 --name pixiv-api pixiv-novel-downloader
+
+# 查看运行状态
+docker ps
+
+# 查看容器日志
+docker logs pixiv-api
+```
+
+#### 访问服务
+
+- **API 服务**：http://localhost:8000
+- **API 文档**：http://localhost:8000/docs
+
+#### 容器管理
+
+```bash
+# 停止容器
+docker stop pixiv-api
+
+# 启动容器
+docker start pixiv-api
+
+# 删除容器
+docker rm pixiv-api
+
+# 进入容器
+docker exec -it pixiv-api /bin/bash
+
+# 查看容器资源使用情况
+docker stats pixiv-api
 ```
 
 ### 生产环境配置
